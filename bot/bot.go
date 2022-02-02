@@ -1,4 +1,4 @@
-package model
+package bot
 
 import (
 	"io"
@@ -10,15 +10,29 @@ import (
 )
 
 const (
-	TimeToday = "daily"
-	TimeWeek  = "weekly"
-	TimeMonth = "monthly"
-
 	urlBase     = "https://github.com"
 	urlTrending = "/trending"
 )
 
-type Time string
+type TrendTime int
+
+const (
+	TimeDaily TrendTime = 1 // daily
+	TimeWeek  TrendTime = 2 // weekly
+	TimeMonth TrendTime = 3 // monthly
+)
+
+type GHTrends struct {
+	client  *http.Client
+	BaseURL *url.URL
+}
+
+func New(httpclient *http.Client) *GHTrends {
+	serverUrl, _ := url.Parse(urlBase)
+	return &GHTrends{
+		client:  httpclient,
+		BaseURL: serverUrl}
+}
 
 type Language struct {
 	Name string
@@ -33,18 +47,6 @@ type Repo struct {
 	Name string
 	Desc string
 	Url  string
-}
-
-type GHTrends struct {
-	client  *http.Client
-	BaseURL *url.URL
-}
-
-func New(httpclient *http.Client) *GHTrends {
-	serverUrl, _ := url.Parse(urlBase)
-	return &GHTrends{
-		client:  httpclient,
-		BaseURL: serverUrl}
 }
 
 func isElementMatch(token html.Token, tag string, attrkey string, attrvalue string) bool {
@@ -111,7 +113,7 @@ func (t *GHTrends) FetchLanguagesList() ([]Language, error) {
 	return languages, nil
 }
 
-func (*GHTrends) FetchRepos(timeframe Time, lang Language) []Repo {
+func (*GHTrends) FetchRepos(timeframe TrendTime, lang Language) []Repo {
 	var projects []Repo
 	return projects
 }
