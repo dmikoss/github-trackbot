@@ -47,30 +47,19 @@ func New(httpclient *http.Client) *GHTrends {
 		BaseURL: serverUrl}
 }
 
-func isElementMenuLanguage(token html.Token) bool {
-	if token.Data != "details" {
+func isElementMatch(token html.Token, tag string, attrkey string, attrvalue string) bool {
+	if token.Data != tag {
 		return false
 	}
 	for _, a := range token.Attr {
-		if a.Key == "id" && a.Val == "select-menu-language" {
+		if a.Key == attrkey && a.Val == attrvalue {
 			return true
 		}
 	}
 	return false
 }
 
-func isElementLanguage(token html.Token) bool {
-	if token.Data != "span" {
-		return false
-	}
-	for _, a := range token.Attr {
-		if a.Key == "class" && a.Val == "select-menu-item-text" {
-			return true
-		}
-	}
-	return false
-}
-
+// Fetch language list from https://github.com/trending
 func (t *GHTrends) FetchLanguagesList() ([]Language, error) {
 	var languages []Language
 
@@ -78,11 +67,11 @@ func (t *GHTrends) FetchLanguagesList() ([]Language, error) {
 	if err != nil {
 		return languages, err
 	}
+	defer resp.Body.Close()
 
 	tokenizer := html.NewTokenizer(resp.Body)
 	depth := 0
-	languageListDepth := 0
-	inLanguageNode := false
+	languageListDepth, inLanguageNode := 0, false
 	for {
 		tokenType := tokenizer.Next()
 
@@ -93,33 +82,32 @@ func (t *GHTrends) FetchLanguagesList() ([]Language, error) {
 			}
 			return languages, err
 		}
-
-		if tokenType == html.StartTagToken {
+		// track node depth
+		switch tokenType {
+		case html.StartTagToken:
 			depth++
-		}
-		if tokenType == html.EndTagToken {
+		case html.EndTagToken:
 			depth--
 		}
+		// only single top language block node
 		if languageListDepth > 0 && depth < languageListDepth {
 			inLanguageNode = false
 		}
 
 		token := tokenizer.Token()
 
-		if isElementMenuLanguage(token) {
+		// find common language block on the page
+		if isElementMatch(token, "details", "id", "select-menu-language") {
 			languageListDepth = depth
 			inLanguageNode = true
 		}
-		if isElementLanguage(token) {
+		// find concrete language
+		if inLanguageNode && isElementMatch(token, "span", "class", "select-menu-item-text") {
 			tokenizer.Next()
-			if inLanguageNode {
-				langName := strings.Trim(tokenizer.Token().Data, "\n\r\t ")
-				languages = append(languages, Language{Name: langName})
-			}
+			langName := strings.TrimSpace(tokenizer.Token().Data)
+			languages = append(languages, Language{Name: langName})
 		}
-
 	}
-	defer resp.Body.Close()
 	return languages, nil
 }
 
