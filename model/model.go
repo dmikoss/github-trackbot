@@ -91,7 +91,7 @@ func (t *GHTrends) FetchLanguagesList() ([]Language, error) {
 		}
 		// only single top language block node
 		if languageListDepth > 0 && depth < languageListDepth {
-			inLanguageNode = false
+			break
 		}
 
 		token := tokenizer.Token()
