@@ -18,4 +18,7 @@ func main() {
 
 	trends := bot.New(http.DefaultClient)
 	fmt.Println(trends.FetchLanguagesList())
+
+	repos, _ := trends.FetchRepos(bot.TimeDaily, bot.Language{Name: "C++"})
+	fmt.Println(repos)
 }
