@@ -130,7 +130,9 @@ func (t *GHTrends) FetchRepos(timeframe TrendTime, lang Language) ([]Repo, error
 	scope := scopearr[timeframe]
 
 	// prepare query path with parameters
-	querypath, err := url.Parse(t.BaseURL.String() + urlTrending + "/" + strings.ReplaceAll(lang.Name, " ", "-"))
+	qstr := t.BaseURL.String() + urlTrending + "/" + strings.ReplaceAll(lang.Name, " ", "-")
+	qstr = strings.TrimSuffix(qstr, "/")
+	querypath, err := url.Parse(qstr)
 	if err != nil {
 		return projects, err
 	}

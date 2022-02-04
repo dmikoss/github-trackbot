@@ -59,3 +59,44 @@ func TestFetchLanguagesCase(t *testing.T) {
 		t.Errorf("languages[0] == %s, expexted C++", languages[0].Name)
 	}
 }
+
+func TestFetchReposCase(t *testing.T) {
+	start()
+	defer finish()
+
+	// empty html (404) - no registered http handlers
+	repos, err := client.FetchRepos(TimeDaily, Language{})
+	if err != nil {
+		t.Errorf("Cant FetchRepos")
+	}
+	if len(repos) != 0 {
+		t.Errorf("FetchRepos returned %+v repos, expexted 0", len(repos))
+	}
+
+	// all repos (no specific language)
+	mux.HandleFunc("/trending", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, string(getFileContent("../testdata/github-trending.html")))
+	})
+	// only go language
+	mux.HandleFunc("/trending/go", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, string(getFileContent("../testdata/github-trending-go.html")))
+	})
+
+	// all lang repos
+	repos, err = client.FetchRepos(TimeDaily, Language{})
+	if err != nil {
+		t.Errorf("Cant FetchRepos")
+	}
+	if len(repos) != 22 {
+		t.Errorf("FetchRepos returned %+v repos, expexted 22", len(repos))
+	}
+
+	// golang repos
+	repos, err = client.FetchRepos(TimeDaily, Language{Name: "go"})
+	if err != nil {
+		t.Errorf("Cant FetchRepos")
+	}
+	if len(repos) != 25 {
+		t.Errorf("FetchRepos returned %+v golang repos, expexted 25", len(repos))
+	}
+}
