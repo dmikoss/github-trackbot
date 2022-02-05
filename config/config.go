@@ -16,12 +16,14 @@ func init() {
 
 type Config struct {
 	TelegramToken string
+	TelegramHost  string
 }
 
 // New returns a new Config struct
 func New() *Config {
 	return &Config{
 		TelegramToken: getEnv("TELEGRAM_BOT_TOKEN", ""),
+		TelegramHost:  getEnv("TELEGRAM_API_HOST", "api.telegram.org"),
 	}
 }
 

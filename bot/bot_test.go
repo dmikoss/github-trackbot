@@ -10,17 +10,17 @@ import (
 )
 
 var (
-	mux    *http.ServeMux
-	client *GHTrends
-	server *httptest.Server
+	mux           *http.ServeMux
+	fetcherClient *Fetcher
+	server        *httptest.Server
 )
 
 // start fake http server to work with our client
 func start() {
 	mux = http.NewServeMux()
 	server = httptest.NewServer(mux)
-	client = New(http.DefaultClient)
-	client.BaseURL, _ = url.Parse(server.URL)
+	fetcherClient = NewFetcher(http.DefaultClient)
+	fetcherClient.BaseURL, _ = url.Parse(server.URL)
 }
 
 // teardown
@@ -46,7 +46,7 @@ func TestFetchLanguagesCase(t *testing.T) {
 		fmt.Fprint(w, string(website))
 	})
 
-	languages, err := client.FetchLanguagesList()
+	languages, err := fetcherClient.FetchLanguagesList()
 	if err != nil {
 		t.Errorf("Cant FetchLanguagesList")
 	}
@@ -65,7 +65,7 @@ func TestFetchReposCase(t *testing.T) {
 	defer finish()
 
 	// empty html (404) - no registered http handlers
-	repos, err := client.FetchRepos(TimeDaily, Language{})
+	repos, err := fetcherClient.FetchRepos(TimeDaily, Language{})
 	if err != nil {
 		t.Errorf("Cant FetchRepos")
 	}
@@ -83,7 +83,7 @@ func TestFetchReposCase(t *testing.T) {
 	})
 
 	// all lang repos
-	repos, err = client.FetchRepos(TimeDaily, Language{})
+	repos, err = fetcherClient.FetchRepos(TimeDaily, Language{})
 	if err != nil {
 		t.Errorf("Cant FetchRepos")
 	}
@@ -92,7 +92,7 @@ func TestFetchReposCase(t *testing.T) {
 	}
 
 	// golang repos
-	repos, err = client.FetchRepos(TimeDaily, Language{Name: "go"})
+	repos, err = fetcherClient.FetchRepos(TimeDaily, Language{Name: "go"})
 	if err != nil {
 		t.Errorf("Cant FetchRepos")
 	}
