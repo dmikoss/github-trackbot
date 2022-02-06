@@ -124,6 +124,7 @@ func (t *Fetcher) FetchLanguagesList() ([]Language, error) {
 }
 
 // Fetch trending repo list from https://github.com/trending
+// if lang.Name not set when fetch all trending language repos
 func (t *Fetcher) FetchRepos(timeframe TrendTime, lang Language) ([]Repo, error) {
 	var projects []Repo
 	scopearr := [3]string{"daily", "weekly", "monthly"}

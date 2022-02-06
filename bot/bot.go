@@ -3,6 +3,7 @@ package bot
 import (
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/dmikoss/GithubTrackBot/config"
 )
@@ -24,6 +25,7 @@ func (b *Bot) Run() error {
 	log.Println("Using token " + config.TelegramToken)
 
 	tgClient := NewTelegramClient(config.TelegramHost, config.TelegramToken)
+	b.fetchTrendingFromGithub()
 
 	for {
 		// delay 1 sec, max 100 updates in one batch
@@ -38,6 +40,22 @@ func (b *Bot) Run() error {
 			}
 		}
 		fmt.Println(updates)
+	}
+	return nil
+}
+
+func (b *Bot) fetchTrendingFromGithub() error {
+	fetcherClient := NewFetcher(http.DefaultClient)
+
+	languages, err := fetcherClient.FetchLanguagesList()
+	if err != nil {
+		return err
+	}
+	fmt.Println(languages)
+
+	for _, lang := range languages {
+		repos, _ := fetcherClient.FetchRepos(TimeDaily, lang)
+		fmt.Println(repos)
 	}
 	return nil
 }
