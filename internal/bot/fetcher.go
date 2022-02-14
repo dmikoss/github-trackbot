@@ -252,7 +252,9 @@ func (t *Fetcher) FetchRepos(timeframe TrendTime, lang Language) ([]Repo, error)
 					break
 				}
 			}
-			projects = append(projects, repo)
+			if repo.NameURL != "" {
+				projects = append(projects, repo)
+			}
 		}
 
 		if beginRepoBlock && tokenType == html.EndTagToken && token.Data == "article" {
