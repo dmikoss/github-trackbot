@@ -15,15 +15,15 @@ import (
 type Client struct {
 	host     string
 	basepath string
-	client   http.Client
+	client   *http.Client
 	offset   int
 }
 
-func NewTelegramClient(host string, token string) Client {
+func NewTelegramClient(host string, token string, httpclient *http.Client) Client {
 	return Client{
 		host:     host,
 		basepath: "bot" + token,
-		client:   http.Client{},
+		client:   httpclient,
 		offset:   0,
 	}
 }
@@ -31,7 +31,6 @@ func NewTelegramClient(host string, token string) Client {
 /*
 	structs for Telegram api
 */
-
 type Message struct {
 	ID   int    `json:"message_id"`
 	Text string `json:"text"`
@@ -48,7 +47,7 @@ type UpdatesResponse struct {
 }
 
 // delay timeout sec, max limit updates in one batch
-func (c *Client) RunRecvMessages(ctx context.Context, chwait chan<- struct{}, limit int, timeout int) error {
+func (c *Client) RunRecvMsgLoop(ctx context.Context, chwait chan<- struct{}, limit int, timeout int) error {
 L:
 	for {
 		updates, err := c.updates(ctx, c.offset, limit, timeout)

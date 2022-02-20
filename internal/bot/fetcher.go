@@ -28,13 +28,6 @@ type Fetcher struct {
 	BaseURL *url.URL
 }
 
-func NewFetcher(httpclient *http.Client) *Fetcher {
-	serverUrl, _ := url.Parse(urlBase)
-	return &Fetcher{
-		client:  httpclient,
-		BaseURL: serverUrl}
-}
-
 type Language struct {
 	Name string
 }
@@ -51,28 +44,14 @@ type Repo struct {
 	Stars    [4]int // daily, weekly, monthly, all
 }
 
-func isElementMatch(token html.Token, tag string, attrkey string, attrvalue string) bool {
-	if token.Data != tag {
-		return false
-	}
-	for _, a := range token.Attr {
-		if a.Key == attrkey && a.Val == attrvalue {
-			return true
-		}
-	}
-	return false
+func NewFetcher(httpclient *http.Client) *Fetcher {
+	serverUrl, _ := url.Parse(urlBase)
+	return &Fetcher{
+		client:  httpclient,
+		BaseURL: serverUrl}
 }
 
-func getAttrValue(token html.Token, attrkey string) string {
-	for _, a := range token.Attr {
-		if a.Key == attrkey {
-			return a.Val
-		}
-	}
-	return ""
-}
-
-// Fetch language list from https://github.com/trending
+// Fetch and parse language list from https://github.com/trending
 func (t *Fetcher) FetchLanguagesList() ([]Language, error) {
 	var languages []Language
 
@@ -85,6 +64,7 @@ func (t *Fetcher) FetchLanguagesList() ([]Language, error) {
 	tokenizer := html.NewTokenizer(resp.Body)
 	depth := 0
 	languageListDepth, inLanguageNode := 0, false
+
 	for {
 		tokenType := tokenizer.Next()
 
@@ -123,7 +103,7 @@ func (t *Fetcher) FetchLanguagesList() ([]Language, error) {
 	return languages, nil
 }
 
-// Fetch trending repo list from https://github.com/trending
+// Fetch and parse trending repo list from https://github.com/trending
 // if lang.Name not set when fetch all trending language repos
 func (t *Fetcher) FetchRepos(timeframe TrendTime, lang Language) ([]Repo, error) {
 	var projects []Repo
@@ -173,7 +153,7 @@ func (t *Fetcher) FetchRepos(timeframe TrendTime, lang Language) ([]Repo, error)
 			for tokenizer.Next() != html.ErrorToken {
 				token = tokenizer.Token()
 				if token.Data == "a" {
-					repo.NameURL = getAttrValue(token, "href")
+					repo.NameURL = attrValue(token, "href")
 					break
 				}
 			}
@@ -231,9 +211,8 @@ func (t *Fetcher) FetchRepos(timeframe TrendTime, lang Language) ([]Repo, error)
 				}
 			}
 
-			// before string util func
+			// get substring before a string.
 			before := func(value string, a string) string {
-				// Get substring before a string.
 				pos := strings.Index(value, a)
 				if pos == -1 {
 					return ""
@@ -241,7 +220,7 @@ func (t *Fetcher) FetchRepos(timeframe TrendTime, lang Language) ([]Repo, error)
 				return value[0:pos]
 			}
 
-			// search text node with overall stars count
+			// search text node with timeframe stars count
 			for tokenizer.Next() != html.ErrorToken {
 				token = tokenizer.Token()
 				if token.Type == html.TextToken {
@@ -262,4 +241,25 @@ func (t *Fetcher) FetchRepos(timeframe TrendTime, lang Language) ([]Repo, error)
 		}
 	}
 	return projects, nil
+}
+
+func isElementMatch(token html.Token, tag string, attrkey string, attrvalue string) bool {
+	if token.Data != tag {
+		return false
+	}
+	for _, a := range token.Attr {
+		if a.Key == attrkey && a.Val == attrvalue {
+			return true
+		}
+	}
+	return false
+}
+
+func attrValue(token html.Token, attrkey string) string {
+	for _, a := range token.Attr {
+		if a.Key == attrkey {
+			return a.Val
+		}
+	}
+	return ""
 }

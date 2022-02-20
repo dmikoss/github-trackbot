@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"golang.org/x/time/rate"
 
@@ -44,16 +45,17 @@ func (b *Bot) Run() error {
 	}()
 
 	// schelude periodic fetch from github trending pages
-	f := func() {
-		b.cronFetchTrendingGithub(ctx, config)
-	}
+	f := func() { b.fetchGithubJob(ctx, config) }
 	c := cron.New()
 	c.AddJob("@every 60m", cron.NewChain(cron.SkipIfStillRunning(cron.DefaultLogger)).Then(cron.FuncJob(f)))
 	c.Start()
 
-	tgClient := NewTelegramClient(config.TelegramApiHost, config.TelegramBotToken)
+	httpclient := &http.Client{
+		Timeout: time.Second * time.Duration(config.TelegramHttpTimeout),
+	}
+	tgClient := NewTelegramClient(config.TelegramApiHost, config.TelegramBotToken, httpclient)
 	chwait := make(chan struct{}, 1)
-	go tgClient.RunRecvMessages(ctx, chwait, 100, 1)
+	go tgClient.RunRecvMsgLoop(ctx, chwait, 100, 1)
 
 	<-chwait          // wait tgClient.RunRecvMessages
 	<-ctx.Done()      // wait context cancel
@@ -61,10 +63,13 @@ func (b *Bot) Run() error {
 	return nil
 }
 
-func (b *Bot) cronFetchTrendingGithub(ctx context.Context, config *config.Config) error {
-	// first download language list
-	fetcherClient := NewFetcher(http.DefaultClient)
-	languages, err := fetcherClient.FetchLanguagesList()
+func (b *Bot) fetchGithubJob(ctx context.Context, config *config.Config) error {
+	httpclient := &http.Client{
+		Timeout: time.Second * time.Duration(config.GithubFetchTimeout),
+	}
+	fetcher := NewFetcher(httpclient)
+	// first download and parse language list
+	languages, err := fetcher.FetchLanguagesList()
 	if err != nil {
 		return err
 	}
@@ -78,11 +83,10 @@ fetchLoop:
 		for _, lang := range languages {
 			limiter.Wait(ctx)
 			if err != nil {
-				fmt.Println(err)
+				return err
 			}
 
-			// TODO
-			//_, err := fetcherClient.FetchRepos(period, lang)
+			_, err := fetcher.FetchRepos(period, lang)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -94,7 +98,6 @@ fetchLoop:
 			default:
 			}
 		}
-
 	}
 	fmt.Println("Graceful")
 	return nil

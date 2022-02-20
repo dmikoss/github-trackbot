@@ -42,7 +42,7 @@ func TestFetchLanguagesCase(t *testing.T) {
 	defer finish()
 
 	mux.HandleFunc("/trending", func(w http.ResponseWriter, r *http.Request) {
-		website := getFileContent("../testdata/github-trending.html")
+		website := getFileContent("../../testdata/github-trending.html")
 		fmt.Fprint(w, string(website))
 	})
 
@@ -75,11 +75,11 @@ func TestFetchReposCase(t *testing.T) {
 
 	// all repos (no specific language)
 	mux.HandleFunc("/trending", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, string(getFileContent("../testdata/github-trending.html")))
+		fmt.Fprint(w, string(getFileContent("../../testdata/github-trending.html")))
 	})
 	// only go language
 	mux.HandleFunc("/trending/go", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, string(getFileContent("../testdata/github-trending-go.html")))
+		fmt.Fprint(w, string(getFileContent("../../testdata/github-trending-go.html")))
 	})
 
 	// all lang repos
