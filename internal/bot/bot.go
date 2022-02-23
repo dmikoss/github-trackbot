@@ -14,7 +14,7 @@ import (
 	"golang.org/x/time/rate"
 
 	"github.com/dmikoss/GithubTrackBot/internal/config"
-	"github.com/robfig/cron/v3"
+	"github.com/go-co-op/gocron"
 )
 
 type Bot struct {
@@ -45,10 +45,11 @@ func (b *Bot) Run() error {
 	}()
 
 	// schelude periodic fetch from github trending pages
-	f := func() { b.fetchGithubJob(ctx, config) }
-	c := cron.New()
-	c.AddJob("@every 60m", cron.NewChain(cron.SkipIfStillRunning(cron.DefaultLogger)).Then(cron.FuncJob(f)))
-	c.Start()
+	s := gocron.NewScheduler(time.UTC)
+	s.Every(config.GithubFetchEvery).SingletonMode().Do(func() {
+		b.fetchGithubJob(ctx, config)
+	})
+	s.StartAsync()
 
 	httpclient := &http.Client{
 		Timeout: time.Second * time.Duration(config.TelegramHttpTimeout),
@@ -57,9 +58,9 @@ func (b *Bot) Run() error {
 	chwait := make(chan struct{}, 1)
 	go tgClient.RunRecvMsgLoop(ctx, chwait, 100, 1)
 
-	<-chwait          // wait tgClient.RunRecvMessages
-	<-ctx.Done()      // wait context cancel
-	<-c.Stop().Done() // wait gocron jobs
+	<-chwait     // wait tgClient.RunRecvMessages
+	<-ctx.Done() // wait context cancel
+	s.Stop()     // wait cron jobs
 	return nil
 }
 
@@ -67,7 +68,7 @@ func (b *Bot) fetchGithubJob(ctx context.Context, config *config.Config) error {
 	httpclient := &http.Client{
 		Timeout: time.Second * time.Duration(config.GithubFetchTimeout),
 	}
-	fetcher := NewFetcher(httpclient)
+	fetcher := NewFetcher(ctx, httpclient)
 	// first download and parse language list
 	languages, err := fetcher.FetchLanguagesList()
 	if err != nil {
@@ -99,6 +100,5 @@ fetchLoop:
 			}
 		}
 	}
-	fmt.Println("Graceful")
 	return nil
 }

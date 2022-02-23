@@ -1,6 +1,8 @@
 package bot
 
 import (
+	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -24,6 +26,7 @@ const (
 )
 
 type Fetcher struct {
+	context context.Context
 	client  *http.Client
 	BaseURL *url.URL
 }
@@ -44,9 +47,10 @@ type Repo struct {
 	Stars    [4]int // daily, weekly, monthly, all
 }
 
-func NewFetcher(httpclient *http.Client) *Fetcher {
+func NewFetcher(ctx context.Context, httpclient *http.Client) *Fetcher {
 	serverUrl, _ := url.Parse(urlBase)
 	return &Fetcher{
+		context: ctx,
 		client:  httpclient,
 		BaseURL: serverUrl}
 }
@@ -55,7 +59,12 @@ func NewFetcher(httpclient *http.Client) *Fetcher {
 func (t *Fetcher) FetchLanguagesList() ([]Language, error) {
 	var languages []Language
 
-	resp, err := t.client.Get(t.BaseURL.String() + urlTrending)
+	req, err := http.NewRequestWithContext(t.context, http.MethodGet, t.BaseURL.String()+urlTrending, nil)
+	if err != nil {
+		return languages, fmt.Errorf("http.NewRequestWithContext error: %w", err)
+	}
+
+	resp, err := t.client.Do(req)
 	if err != nil {
 		return languages, err
 	}
@@ -121,8 +130,12 @@ func (t *Fetcher) FetchRepos(timeframe TrendTime, lang Language) ([]Repo, error)
 	q.Set("since", scope)
 	querypath.RawQuery = q.Encode()
 
+	req, err := http.NewRequestWithContext(t.context, http.MethodGet, querypath.String(), nil)
+	if err != nil {
+		return projects, fmt.Errorf("http.NewRequestWithContext error: %w", err)
+	}
 	// http get
-	resp, err := t.client.Get(querypath.String())
+	resp, err := t.client.Do(req)
 	if err != nil {
 		return projects, err
 	}

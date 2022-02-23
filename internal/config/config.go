@@ -18,6 +18,7 @@ func init() {
 type Config struct {
 	TelegramBotToken    string
 	TelegramApiHost     string
+	GithubFetchEvery    string
 	GithubFetchRate     float64 // github fetch rate limiting (in RPS)
 	GithubFetchTimeout  float64 // github fetch http client timeout
 	TelegramHttpTimeout float64 // telegram http client timeout
@@ -28,7 +29,8 @@ func New() *Config {
 	return &Config{
 		TelegramBotToken:    getEnv("TELEGRAM_BOT_TOKEN", ""),
 		TelegramApiHost:     getEnv("TELEGRAM_API_HOST", "api.telegram.org"),
-		GithubFetchRate:     getEnvFloat("GITHUB_FETCH_RATE", 0.5),
+		GithubFetchEvery:    getEnv("GITHUB_FETCH_EVERY_SEC", "60m"),
+		GithubFetchRate:     getEnvFloat("GITHUB_FETCH_RATE", 0.1),
 		GithubFetchTimeout:  getEnvFloat("GITHUB_FETCH_TIMEOUT", 10),
 		TelegramHttpTimeout: getEnvFloat("TELEGRAM_HTTP_TIMEOUT", 10),
 	}

@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -19,7 +20,7 @@ var (
 func start() {
 	mux = http.NewServeMux()
 	server = httptest.NewServer(mux)
-	fetcherClient = NewFetcher(http.DefaultClient)
+	fetcherClient = NewFetcher(context.Background(), http.DefaultClient)
 	fetcherClient.BaseURL, _ = url.Parse(server.URL)
 }
 

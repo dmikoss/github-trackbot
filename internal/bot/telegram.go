@@ -115,12 +115,10 @@ func (c *Client) doRequest(ctx context.Context, endpoint string, query url.Value
 	}
 
 	// request preparing
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("http.NewRequest error: %w", err)
 	}
-	// for graceful shutdown
-	req = req.WithContext(ctx)
 	req.URL.RawQuery = query.Encode()
 	// do request
 	resp, err := c.client.Do(req)
