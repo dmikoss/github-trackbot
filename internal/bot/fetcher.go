@@ -160,7 +160,7 @@ func (t *Fetcher) FetchRepos(timeframe TrendTime, lang Language) ([]Repo, error)
 			beginRepoBlock = true
 		}
 
-		if beginRepoBlock && isElementMatch(token, "h1", "class", "h3 lh-condensed") {
+		if beginRepoBlock && isElementMatch(token, "h2", "class", "h3 lh-condensed") {
 			var repo Repo
 			// search <a> tag with href
 			for tokenizer.Next() != html.ErrorToken {

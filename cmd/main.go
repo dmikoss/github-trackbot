@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/dmikoss/GithubTrackBot/internal/bot"
+	"github.com/dmikoss/github-trackbot/internal/bot"
 )
 
 func main() {

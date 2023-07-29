@@ -13,7 +13,7 @@ import (
 
 	"golang.org/x/time/rate"
 
-	"github.com/dmikoss/GithubTrackBot/internal/config"
+	"github.com/dmikoss/github-trackbot/internal/config"
 	"github.com/go-co-op/gocron"
 )
 

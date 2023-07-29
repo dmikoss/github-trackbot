@@ -3,10 +3,10 @@ package bot
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 )
 
@@ -31,7 +31,7 @@ func finish() {
 
 // return readed file content
 func getFileContent(file string) []byte {
-	content, err := ioutil.ReadFile(file)
+	content, err := os.ReadFile(file)
 	if err != nil {
 		return []byte{}
 	}
@@ -52,12 +52,12 @@ func TestFetchLanguagesCase(t *testing.T) {
 		t.Errorf("Cant FetchLanguagesList")
 	}
 
-	if len(languages) != 611 {
-		t.Errorf("FetchLanguagesList returned %+v languages, expexted 611", len(languages))
+	if len(languages) != 708 {
+		t.Errorf("FetchLanguagesList returned %+v languages, expexted 708", len(languages))
 	}
 
-	if languages[0].Name != "C++" {
-		t.Errorf("languages[0] == %s, expexted C++", languages[0].Name)
+	if languages[0].Name != "Unknown languages" {
+		t.Errorf("languages[0] == %s, expexted Unknown languages", languages[0].Name)
 	}
 }
 

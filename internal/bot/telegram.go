@@ -29,7 +29,7 @@ func NewTelegramClient(host string, token string, httpclient *http.Client) Clien
 }
 
 /*
-	structs for Telegram api
+structs for Telegram api
 */
 type Message struct {
 	ID   int    `json:"message_id"`
